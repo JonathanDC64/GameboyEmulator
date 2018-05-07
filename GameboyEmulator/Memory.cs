@@ -1,5 +1,7 @@
 ﻿using System;
 
+
+// View page 7 of http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
 namespace GameboyEmulator
 {
 	/**
@@ -33,13 +35,32 @@ namespace GameboyEmulator
 
 	class Memory
 	{
+		// The interrup enabled register located at 0xFFFF
+		private byte InterruptEnable = 0;
+
+		// Internal RAM [FF80, FFFF)
+		private byte[] IRAM = new byte[0x80];
+
+		// Input / Output ports
+		private byte[] IO = new byte[0x100];
+
+		// Sprite Attrib Memory [FE00, FEA0)
+		private byte[] OAM = new byte[0x100];
+
 		// Random Access Memory
 		// Main RAM: 8K Byte
-		byte[] RAM = new byte[0x2000];
+		private byte[] RAM = new byte[0x2000];
+
+		// 8 KB switchable RAM bank
+		private byte[] SRAM = new byte[0x2000];
 
 		// Video RAM
 		// Video RAM: 8K Byte
-		byte[] VRAM = new byte[0x2000];
+		private byte[] VRAM = new byte[0x2000];
+
+		// 32 KB game cart (16 KB ROM bank 0 [0000, 4000) ) (16 KB switchable rombank [4000, 8000) )
+		private byte[] Cart = new byte[0x8000];
+		
 
 		// Scrolling Nintendo Graphic Encoding
 		byte[] NGRAPH = new byte[]{
@@ -51,42 +72,101 @@ namespace GameboyEmulator
 
 		public byte ReadByte(ushort addr)
 		{
-			if (addr >= 0xC000 && addr < 0xE000)
-			{
-				return RAM[addr - 0xC000];
-			}
-			else if (addr >= 0xE000 && addr < 0xFE00)
-			{
-				return RAM[addr - 0xE000];
-			}
-			else if (addr >= 0x8000 && addr <= 0xA000)
-			{
+			// Cart
+			if (addr < 0x8000)
+				return Cart[addr];
+
+			// VRAM
+			else if (addr >= 0x8000 && addr < 0xA000)
 				return VRAM[addr - 0x8000];
-			}
+
+			// 8 KB switchable rambank
+			else if (addr >= 0xA000 && addr < 0xC000)
+				return SRAM[addr - 0xA000];
+
+			// 8KB Internal RAM
+			else if (addr >= 0xC000 && addr < 0xE000)
+				return RAM[addr - 0xC000];
+
+
+			// Echo of 8KB Interal RAM
+			else if (addr >= 0xE000 && addr < 0xFE00)
+				return RAM[addr - 0xE000];
+
+
+			// Sprite Attrib Memory OAM
+			else if (addr >= 0xFE00 && addr < 0xFF00)
+				return OAM[addr - 0xFE00];
+
+
+			// I/O Ports
+			else if (addr >= 0xFF00 && addr < 0xFF80)
+				return IO[addr - 0xFF00];
+
+
+			// Internal RAM
+			else if (addr >= 0xFF80)
+				return IRAM[addr - 0xFF80];
+
+
+			// Interrupt Enable Register
+			else if (addr == 0xFFFF)
+				return InterruptEnable;
+
+
+			// If exception triggers, there is a problem with registers, opcodes or memory address has not been implemented
 			else
-			{
 				throw new Exception($"Memory address 0x{Convert.ToString(addr, 16)} not implemented");
-			}
+			
 		}
 
 		public void WriteByte(ushort addr, byte data)
 		{
-			if (addr >= 0xC000 && addr < 0xE000)
-			{
-				RAM[addr - 0xC000] = data;
-			}
-			else if (addr >= 0xE000 && addr < 0xFE00)
-			{
-				RAM[addr - 0xE000] = data;
-			}
-			else if (addr >= 0x8000 && addr <= 0xA000)
-			{
+			// Cart
+			if (addr < 0x8000)
+				Cart[addr] = data;
+
+			// VRAM
+			else if (addr >= 0x8000 && addr < 0xA000)
 				VRAM[addr - 0x8000] = data;
-			}
+
+			// 8 KB switchable rambank
+			else if (addr >= 0xA000 && addr < 0xC000)
+				SRAM[addr - 0xA000] = data;
+
+			// 8KB Internal RAM
+			else if (addr >= 0xC000 && addr < 0xE000)
+				RAM[addr - 0xC000] = data;
+
+
+			// Echo of 8KB Interal RAM
+			else if (addr >= 0xE000 && addr < 0xFE00)
+				RAM[addr - 0xE000] = data;
+
+
+			// Sprite Attrib Memory OAM
+			else if (addr >= 0xFE00 && addr < 0xFF00)
+				OAM[addr - 0xFE00] = data;
+
+
+			// I/O Ports
+			else if (addr >= 0xFF00 && addr < 0xFF80)
+				IO[addr - 0xFF00] = data;
+
+
+			// Internal RAM
+			else if (addr >= 0xFF80)
+				IRAM[addr - 0xFF80] = data;
+
+
+			// Interrupt Enable Register
+			else if (addr == 0xFFFF)
+				InterruptEnable = data;
+
+
+			// If exception triggers, there is a problem with registers, opcodes or memory address has not been implemented
 			else
-			{
 				throw new Exception($"Memory address 0x{Convert.ToString(addr, 16)} not implemented");
-			}
 		}
 	}
 }
