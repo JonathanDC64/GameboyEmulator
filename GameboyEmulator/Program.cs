@@ -23,11 +23,11 @@ namespace GameboyEmulator
 			Console.WriteLine(b);*/
 
 			//Console.WriteLine(Directory.GetCurrentDirectory());
-			string instruction_string = File.ReadAllText("opcodes.json");
+			//string instruction_string = File.ReadAllText("opcodes.json");
 			//Console.WriteLine(instruction_string);
-			Instructions instructions = JsonConvert.DeserializeObject<Instructions>(instruction_string);
+			//InstructionsData instructions = JsonConvert.DeserializeObject<InstructionsData>(instruction_string);
 
-			Console.WriteLine(instructions);
+			//Console.WriteLine(instructions);
 
 			//foreach (var item in instructions["unprefixed"])
 			//{
@@ -37,6 +37,8 @@ namespace GameboyEmulator
 			//	//	Console.WriteLine(instruction);
 			//	//}
 			//}
+
+			CPU c = new CPU();
 			
 		}
 

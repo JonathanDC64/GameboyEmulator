@@ -12,10 +12,25 @@ namespace GameboyEmulator
 		public string operand1;
 		public string operand2;
 
+		public delegate void Exec(ushort operand);
+		private Exec function;
+
+		public void MapFunction(Exec function)
+		{
+			this.function = function;
+		}
+
+
+		public void Execute(ushort operand)
+		{
+			function(operand);
+		}
+
 		public override string ToString()
 		{
 			return $"{{ mnemonic : {mnemonic}, length : {length}, cycles : [ {String.Join(", ", cycles)} ], flags : [{String.Join(", ", flags)}], addr : {addr}, operand1 : {operand1}, operand2 : {operand2}}}";
-
 		}
+
+
 	}
 }

@@ -1,6 +1,7 @@
 ﻿
 
 using Newtonsoft.Json;
+using System;
 using System.IO;
 
 namespace GameboyEmulator
@@ -118,80 +119,95 @@ namespace GameboyEmulator
 			}
 		}
 
+		//Useful bit #'s of the Flag register 'F'
+		private enum Flags
+		{
+			C = 4,
+			H = 5,
+			N = 6,
+			Z = 7
+		}
+
 		// Two 16-bit registers
 		ushort SP;
 		ushort PC;
 
-		// Random Access Memory
-		byte[] RAM;
+		private Memory memory;
 
-		// Video RAM
-		byte[] VRAM;
+		private Instructions instructions;
 
-		// Scrolling Nintendo Graphic Encoding
-		byte[] NGRAPH;
-
-		/**
-		 * MEMORY MAP
-		 * 
-		 * Interrupt Enable Register
-		 * --------------------------- FFFF
-		 * Internal RAM
-		 * --------------------------- FF80
-		 * Empty but unusable for I/O
-		 * --------------------------- FF4C
-		 * I/O ports
-		 * --------------------------- FF00
-		 * Empty but unusable for I/O
-		 * --------------------------- FEA0
-		 * Sprite Attrib Memory (OAM)
-		 * --------------------------- FE00
-		 * Echo of 8kB Internal RAM
-		 * --------------------------- E000
-		 * 8kB Internal RAM
-		 * --------------------------- C000
-		 * 8kB switchable RAM bank
-		 * --------------------------- A000
-		 * 8kB Video RAM
-		 * --------------------------- 8000 --
-		 * 16kB switchable ROM bank |
-		 * --------------------------- 4000 |= 32kB Cartrigbe 0000-7FFF
-		 * 16kB ROM bank #0 |
-		 * --------------------------- 0000 --		*/
 
 		// Initialize RAM and Registers
 		public CPU()
 		{
-			// Main RAM: 8K Byte
-			RAM = new byte[8192];
-
-			// Video RAM: 8K Byte
-			VRAM = new byte[8192];
-
-			// Scrolling Nintendo graphic
-			NGRAPH = new byte[]{
-				0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
-				0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E, 0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99,
-				0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E			};
+			// Initalize memory unit
+			memory = new Memory();
 
 			// Nintendo graphic storred in fixed location 0x0104-0x0133
-			for (int i = 0; i < NGRAPH.Length; i++)
-			{
-				RAM[0x104 + i] = NGRAPH[i];
-			}
+			//for (int i = 0; i < NGRAPH.Length; i++)
+			//{
+			//	RAM[0x104 + i] = NGRAPH[i];
+			//}
 
 			// On power up, the GameBoy Program Counter is
 			// initialized to $100(100 hex) and the instruction found
 			// at this location in ROM is executed.
 			PC = 0x100;
 
-			// The GameBoy stack pointer is initialized to $FFFE on power up
-			SP = 0xFFFE;
-
 			// Load a list of instructions from file
 			string instruction_string = File.ReadAllText("opcodes.json");
-			Instructions instructions = JsonConvert.DeserializeObject<Instructions>(instruction_string);
+			instructions = new Instructions(JsonConvert.DeserializeObject<InstructionsData>(instruction_string));
+
+			// Power Up Sequence
+
+			AF = 0x01;	// $01- GB / SGB, $FF - GBP, $11 - GBC
+			F = 0xB0;
+			BC = 0x0013;
+			DE = 0x00D8;
+			HL = 0x014D;
+			SP = 0xFFFE;
+
+			memory.WriteByte(0xFF05, 0x00);
+			memory.WriteByte(0xFF06, 0x00);
+			memory.WriteByte(0xFF07, 0x00);
+			memory.WriteByte(0xFF10, 0x80);
+			memory.WriteByte(0xFF11, 0xBF);
+			memory.WriteByte(0xFF12, 0xF3);
+			memory.WriteByte(0xFF14, 0xBF);
+			memory.WriteByte(0xFF16, 0x3F);
+			memory.WriteByte(0xFF17, 0x00);
+			memory.WriteByte(0xFF19, 0xBF);
+			memory.WriteByte(0xFF1A, 0x7F);
+			memory.WriteByte(0xFF1B, 0xFF);
+			memory.WriteByte(0xFF1C, 0x9F);
+			memory.WriteByte(0xFF1E, 0xBF);
+			memory.WriteByte(0xFF20, 0xFF);
+			memory.WriteByte(0xFF21, 0x00);
+			memory.WriteByte(0xFF22, 0x00);
+			memory.WriteByte(0xFF23, 0xBF);
+			memory.WriteByte(0xFF24, 0x77);
+			memory.WriteByte(0xFF25, 0xF3);
+			memory.WriteByte(0xFF26, 0xF1); //  $F1-GB, $F0-SGB ;
+			memory.WriteByte(0xFF40, 0x91);
+			memory.WriteByte(0xFF42, 0x00);
+			memory.WriteByte(0xFF43, 0x00);
+			memory.WriteByte(0xFF45, 0x00);
+			memory.WriteByte(0xFF47, 0xFC);
+			memory.WriteByte(0xFF48, 0xFF);
+			memory.WriteByte(0xFF49, 0xFF);
+			memory.WriteByte(0xFF4A, 0x00);
+			memory.WriteByte(0xFF4B, 0x00);
+			memory.WriteByte(0xFFFF, 0x00);
+
+			instructions.unprefixed[0x0].MapFunction(NOP);
 		}
+
+		private void NOP(ushort operand)
+		{
+			
+		}
+
+		
 
 		// Get the upper byte of a 16 bit number
 		private byte GetUpperByte(ushort value)
@@ -215,6 +231,12 @@ namespace GameboyEmulator
 		private void SetLowerByte(ref ushort reference, byte value)
 		{
 			reference = (ushort)((reference & 0xFF00) + (value));
+		}
+
+		//
+		public static int HexStringToInt(string hex)
+		{
+			return Convert.ToInt32(hex, 16);
 		}
 	}
 }

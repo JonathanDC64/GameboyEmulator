@@ -1,17 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace GameboyEmulator
 {
 	class Instructions
 	{
 		public string source;
-		public Dictionary<string, Instruction> unprefixed;
-		public Dictionary<string, Instruction> cbprefixed;
+		public Instruction[] unprefixed;
+		public Instruction[] cbprefixed;
 
-		public override string ToString()
+		public Instructions(InstructionsData instructionsData)
 		{
-			return string.Join(";\n", unprefixed.Select(x => x.Key + "=" + x.Value).ToArray());
+			source = instructionsData.source;
+			unprefixed = new Instruction[0x100]; // 256 possible opcodes
+			cbprefixed = new Instruction[0x100]; // 256 possible opcodes
+
+			foreach (KeyValuePair<string, Instruction> instruction in instructionsData.unprefixed)
+			{
+				int index = CPU.HexStringToInt(instruction.Key);
+				unprefixed[index] = instruction.Value;
+			}
+
+			foreach (KeyValuePair<string, Instruction> instruction in instructionsData.cbprefixed)
+			{
+				int index = CPU.HexStringToInt(instruction.Key);
+				cbprefixed[index] = instruction.Value;
+			}
 		}
 	}
 }
