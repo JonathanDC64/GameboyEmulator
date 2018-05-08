@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 
 // View page 7 of http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
@@ -167,6 +168,11 @@ namespace GameboyEmulator
 			// If exception triggers, there is a problem with registers, opcodes or memory address has not been implemented
 			else
 				throw new Exception($"Memory address 0x{Convert.ToString(addr, 16)} not implemented");
+		}
+
+		public void LoadCart(string path)
+		{
+			Cart = File.ReadAllBytes(path);
 		}
 	}
 }

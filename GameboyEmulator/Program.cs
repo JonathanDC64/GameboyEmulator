@@ -38,8 +38,9 @@ namespace GameboyEmulator
 			//	//}
 			//}
 
-			CPU c = new CPU();
-			
+			CPU c = new CPU("C:\\Users\\Eugenio\\Downloads\\Tetris (World)\\Tetris (World).gb");
+			c.Run();
+			c.Run();
 		}
 
 		private static void T(ref ushort a, byte value)

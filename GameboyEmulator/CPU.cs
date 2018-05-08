@@ -138,10 +138,13 @@ namespace GameboyEmulator
 
 
 		// Initialize RAM and Registers
-		public CPU()
+		public CPU(string romPath)
 		{
 			// Initalize memory unit
 			memory = new Memory();
+
+			// Load  cart data from GB rom
+			memory.LoadCart(romPath);
 
 			// Nintendo graphic storred in fixed location 0x0104-0x0133
 			//for (int i = 0; i < NGRAPH.Length; i++)
@@ -237,6 +240,25 @@ namespace GameboyEmulator
 		public static int HexStringToInt(string hex)
 		{
 			return Convert.ToInt32(hex, 16);
+		}
+
+		public void Run()
+		{
+			// Fetch
+			byte opcode = memory.ReadByte(PC++);
+
+			// Decode
+			Instruction instruction = instructions.unprefixed[opcode];
+			int length = instruction.length - 1;
+			ushort operand = 0;
+
+			for (int i = PC, j = PC + length, k = 0; i < j; i++, PC++, k++)
+			{
+				operand += (ushort)(memory.ReadByte(PC) << (k * 8));
+			}
+
+			// Execute
+			instruction.Execute(operand);
 		}
 	}
 }
