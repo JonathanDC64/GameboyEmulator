@@ -202,15 +202,70 @@ namespace GameboyEmulator
 			memory.WriteByte(0xFF4B, 0x00);
 			memory.WriteByte(0xFFFF, 0x00);
 
-			instructions.unprefixed[0x0].MapFunction(NOP);
+			instructions.unprefixed[0x00].MapFunction(NOP);
+			instructions.unprefixed[0x01].MapFunction(LD_BC_NN);
+			instructions.unprefixed[0x02].MapFunction(LD_BC_A);
+			instructions.unprefixed[0x03].MapFunction(INC_BC);
+
 		}
 
+		private void SetFlag(Flags flag)
+		{
+			F |= (byte)(1 << (byte)flag);
+		}
+
+		private void UnsetFlag(Flags flag)
+		{
+			F &= (byte)(~(1 << (byte)flag));
+		}
+
+		private void ToggleFlag(Flags flag)
+		{
+			if (IsFlagSet(flag))
+				UnsetFlag(flag);
+			else
+				SetFlag(flag);
+		}
+
+		private bool IsFlagSet(Flags flag)
+		{
+			return ((F & (byte)(1 << (byte)flag)) >> (byte)flag) == 1;
+		}
+
+		private void INC()
+		{
+
+		}
+
+		//0x00
 		private void NOP(ushort operand)
 		{
-			
+			// Do nothing
 		}
 
-		
+		//0x01
+		private void LD_BC_NN(ushort operand)
+		{
+			BC = operand;
+		}
+
+		//0x02
+		private void LD_BC_A(ushort operand)
+		{
+			memory.WriteByte(BC, A);
+		}
+
+		//0x03
+		private void INC_BC(ushort operand)
+		{
+			BC++;
+		}
+
+		//0x04
+		private void INC_B(ushort operand)
+		{
+			//B++; might not be good;
+		}
 
 		// Get the upper byte of a 16 bit number
 		private byte GetUpperByte(ushort value)

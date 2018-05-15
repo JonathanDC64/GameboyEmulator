@@ -38,9 +38,17 @@ namespace GameboyEmulator
 			//	//}
 			//}
 
+
+			byte b = 0x0;
+			byte f = 1;
+			//b |= (byte)(1 << (byte)f);
+			//b &= (byte)~(int)(1 << f);
+
+			Console.WriteLine(((b & (byte)(1 << (byte)f)) >> (byte)f) == 1);
+
 			CPU c = new CPU("C:\\Users\\Eugenio\\Downloads\\Tetris (World)\\Tetris (World).gb");
-			c.Run();
-			c.Run();
+			//c.Run();
+			//c.Run();
 		}
 
 		private static void T(ref ushort a, byte value)

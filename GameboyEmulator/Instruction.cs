@@ -23,6 +23,8 @@ namespace GameboyEmulator
 
 		public void Execute(ushort operand)
 		{
+			if (function == null)
+				throw new Exception($"Instruction {addr} {mnemonic} has not been implemented");
 			function(operand);
 		}
 
